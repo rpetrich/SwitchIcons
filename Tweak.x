@@ -34,6 +34,25 @@ static NSBundle *templateBundle;
 
 %subclass SBSwitchIcon : SBLeafIcon
 
+%group iOS5
+
+%new
+- (id)initWithLeafIdentifier:(NSString *)leafIdentifier
+{
+	if ((self = [self init])) {
+		objc_setAssociatedObject(self, @selector(leafIdentifier), leafIdentifier, OBJC_ASSOCIATION_COPY_NONATOMIC);
+	}
+	return self;
+}
+
+%new
+- (NSString *)leafIdentifier
+{
+	return objc_getAssociatedObject(self, @selector(leafIdentifier));
+}
+
+%end
+
 %new
 - (id)initWithSwitchIdentifier:(NSString *)switchIdentifier
 {
@@ -161,6 +180,9 @@ static NSArray *loadedSwitchIdentifiers;
 {
 	NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
 	%init();
+	if (kCFCoreFoundationVersionNumber < 700.0) {
+		%init(iOS5);
+	}
 	// Register with IconSupport.
 	dlopen("/Library/MobileSubstrate/DynamicLibraries/IconSupport.dylib", RTLD_NOW);
 	[(ISIconSupport *)[objc_getClass("ISIconSupport") sharedInstance] addExtension:@"switchicons"];
