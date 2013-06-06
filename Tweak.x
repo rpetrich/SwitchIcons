@@ -30,6 +30,22 @@
 - (void)addNewIconToDesignatedLocation:(SBIcon *)icon animate:(BOOL)animate scrollToList:(BOOL)scrollToList saveIconState:(BOOL)saveIconState;
 @end
 
+@interface SBIconView : UIView
+@property (nonatomic, readonly) id icon;
+@end
+
+@interface SBSwitchIconView : SBIconView
+@end
+
+@implementation NSObject (SwitchIcons)
+
+- (BOOL)isSwitchIcon
+{
+	return NO;
+}
+
+@end
+
 static NSBundle *templateBundle;
 
 %subclass SBSwitchIcon : SBLeafIcon
@@ -66,6 +82,11 @@ static NSBundle *templateBundle;
 {
 	[[NSNotificationCenter defaultCenter] removeObserver:self];
 	%orig();
+}
+
+- (BOOL)isSwitchIcon
+{
+	return YES;
 }
 
 %new
@@ -119,6 +140,44 @@ static NSBundle *templateBundle;
 - (NSString *)folderFallbackTitle
 {
 	return @"Switches";
+}
+
+%end
+
+%subclass SBSwitchIconView : SBIconView
+
+- (NSString *)accessibilityValue
+{
+	switch ([[FSSwitchPanel sharedPanel] stateForSwitchIdentifier:[self.icon switchIdentifier]]) {
+		case FSSwitchStateOff:
+			return @"Off";
+		case FSSwitchStateOn:
+			return @"On";
+		default:
+			return nil;
+	}
+}
+
+- (NSString *)accessibilityHint
+{
+	switch ([[FSSwitchPanel sharedPanel] stateForSwitchIdentifier:[self.icon switchIdentifier]]) {
+		case FSSwitchStateOff:
+		case FSSwitchStateOn:
+			return @"Double tap to switch";
+		default:
+			return %orig();
+	}
+}
+
+%end
+
+%hook SBIconController
+
+- (Class)viewMap:(id)map iconViewClassForIcon:(SBIcon *)icon
+{
+	if ([icon isSwitchIcon])
+		return %c(SBSwitchIconView);
+	return %orig();
 }
 
 %end
