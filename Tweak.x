@@ -169,6 +169,13 @@ static NSBundle *templateBundle;
 	}
 }
 
+- (void)setHighlighted:(BOOL)highlighted delayUnhighlight:(BOOL)delayUnhighlight
+{
+	if (!highlighted && delayUnhighlight && [[FSSwitchPanel sharedPanel] stateForSwitchIdentifier:[self.icon switchIdentifier]] != FSSwitchStateIndeterminate)
+		delayUnhighlight = NO;
+	%orig();
+}
+
 %end
 
 %hook SBIconController
