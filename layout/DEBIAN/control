@@ -1,6 +1,6 @@
 Package: com.rpetrich.switchicons
 Name: Switchicons
-Version: 0.1
+Version: 1.0
 Architecture: iphoneos-arm
 Description: Switches as home screen icons
 Maintainer: BigBoss <bigboss@thebigboss.org>
