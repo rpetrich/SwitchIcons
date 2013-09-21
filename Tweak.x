@@ -99,14 +99,14 @@ static NSBundle *templateBundle;
 {
 	FSSwitchPanel *switchPanel = [FSSwitchPanel sharedPanel];
 	NSString *switchIdentifier = [self switchIdentifier];
-	return [switchPanel imageOfSwitchState:[switchPanel stateForSwitchIdentifier:switchIdentifier] controlState:UIControlStateNormal forSwitchIdentifier:switchIdentifier usingTemplate:templateBundle];
+	return [switchPanel imageOfSwitchState:[switchPanel stateForSwitchIdentifier:switchIdentifier] controlState:[switchPanel switchWithIdentifierIsEnabled:switchIdentifier] ? UIControlStateNormal : UIControlStateDisabled forSwitchIdentifier:switchIdentifier usingTemplate:templateBundle];
 }
 
 - (UIImage *)generateIconImage:(int)image
 {
 	FSSwitchPanel *switchPanel = [FSSwitchPanel sharedPanel];
 	NSString *switchIdentifier = [self switchIdentifier];
-	return [switchPanel imageOfSwitchState:[switchPanel stateForSwitchIdentifier:switchIdentifier] controlState:UIControlStateNormal forSwitchIdentifier:switchIdentifier usingTemplate:templateBundle];
+	return [switchPanel imageOfSwitchState:[switchPanel stateForSwitchIdentifier:switchIdentifier] controlState:[switchPanel switchWithIdentifierIsEnabled:switchIdentifier] ? UIControlStateNormal : UIControlStateDisabled forSwitchIdentifier:switchIdentifier usingTemplate:templateBundle];
 }
 
 %new
@@ -171,6 +171,11 @@ static NSBundle *templateBundle;
 
 - (void)setHighlighted:(BOOL)highlighted delayUnhighlight:(BOOL)delayUnhighlight
 {
+	if (highlighted) {
+		if (![[FSSwitchPanel sharedPanel] switchWithIdentifierIsEnabled:[self.icon switchIdentifier]]) {
+			highlighted = NO;
+		}
+	}
 	if (!highlighted && delayUnhighlight && [[FSSwitchPanel sharedPanel] stateForSwitchIdentifier:[self.icon switchIdentifier]] != FSSwitchStateIndeterminate)
 		delayUnhighlight = NO;
 	%orig();
