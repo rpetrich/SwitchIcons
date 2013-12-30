@@ -5,12 +5,9 @@ all clean package install::
 	$(MAKE) $(MAKEFLAGS) MAKELEVEL=0 $@
 else
 
-ARCHS = armv7
+IPHONE_ARCHS = armv7 arm64
 
-SDKVERSION = 6.1
-INCLUDE_SDKVERSION = 6.1
 TARGET_IPHONEOS_DEPLOYMENT_VERSION = 5.0
-TARGET=:clang
 
 TWEAK_NAME = SwitchIcons
 SwitchIcons_FILES = Tweak.x

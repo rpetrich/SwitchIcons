@@ -12,6 +12,7 @@
 
 @interface SBLeafIcon : SBIcon
 - (id)initWithLeafIdentifier:(NSString *)leafIdentifier;
+- (id)initWithLeafIdentifier:(NSString *)leafIdentifier applicationBundleID:(NSString *)bundleIdentifier;
 - (NSString *)leafIdentifier;
 - (void)reloadIconImagePurgingImageCache:(BOOL)purgingImageCache;
 @end
@@ -69,10 +70,17 @@ static NSBundle *templateBundle;
 
 %end
 
+
 %new
 - (id)initWithSwitchIdentifier:(NSString *)switchIdentifier
 {
-	if ((self = [self initWithLeafIdentifier:[kIdentifierPrefix stringByAppendingString:switchIdentifier]])) {
+	NSString *leafIdentifier = [kIdentifierPrefix stringByAppendingString:switchIdentifier];
+	if ([self respondsToSelector:@selector(initWithLeafIdentifier:applicationBundleID:)]) {
+		self = [self initWithLeafIdentifier:leafIdentifier applicationBundleID:nil];
+	} else {
+		self = [self initWithLeafIdentifier:leafIdentifier];
+	}
+	if (self) {
 		[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(_switchStateChanged:) name:FSSwitchPanelSwitchStateChangedNotification object:nil];
 	}
 	return self;
@@ -125,6 +133,16 @@ static NSBundle *templateBundle;
 - (void)launch
 {
 	[[FSSwitchPanel sharedPanel] applyActionForSwitchIdentifier:[self switchIdentifier]];
+}
+
+- (void)launchFromLocation:(int)location
+{
+	[[FSSwitchPanel sharedPanel] applyActionForSwitchIdentifier:[self switchIdentifier]];
+}
+
+- (BOOL)launchEnabled
+{
+	return YES;
 }
 
 - (NSString *)displayName
