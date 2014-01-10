@@ -174,6 +174,11 @@ static NSBundle *templateBundle;
 	return @"Switches";
 }
 
+- (NSString *)applicationBundleID
+{
+	return [@"switchicons-fix-for-ios7-crash-" stringByAppendingString:[self switchIdentifier]];
+}
+
 - (Class)iconViewClassForLocation:(int)location
 {
 	return %c(SBSwitchIconView);
