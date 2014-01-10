@@ -1,6 +1,7 @@
 #import <SpringBoard/SpringBoard.h>
 #import <objc/runtime.h>
 #import <dlfcn.h>
+#import <CaptainHook/CaptainHook.h>
 #import "../Flipswitch/Flipswitch.h"
 
 @interface ISIconSupport : NSObject
@@ -33,9 +34,22 @@
 
 @interface SBIconView : UIView
 @property (nonatomic, readonly) id icon;
+- (UIImageView *)_iconImageView;
 @end
 
 @interface SBSwitchIconView : SBIconView
+@end
+
+@interface SBIconImageView (iOS7)
+@property (nonatomic, retain) SBIcon *icon;
+@end
+
+@interface SBSwitchIconImageView : SBIconImageView
+@end
+
+@interface SBFolderIconBackgroundView : UIView
+- (id)initWithDefaultSize;
+- (void)setWallpaperRelativeCenter:(CGPoint)wallpaperRelativeCenter;
 @end
 
 @implementation NSObject (SwitchIcons)
@@ -160,6 +174,16 @@ static NSBundle *templateBundle;
 	return @"Switches";
 }
 
+- (Class)iconViewClassForLocation:(int)location
+{
+	return %c(SBSwitchIconView);
+}
+
+- (Class)iconImageViewClassForLocation:(int)location
+{
+	return %c(SBSwitchIconImageView);
+}
+
 %end
 
 %subclass SBSwitchIconView : SBIconView
@@ -199,6 +223,42 @@ static NSBundle *templateBundle;
 	%orig();
 }
 
+- (id)initWithDefaultSize
+{
+	if ((self = %orig())) {
+		SBFolderIconBackgroundView *backgroundView = [[%c(SBFolderIconBackgroundView) alloc] initWithDefaultSize];
+		objc_setAssociatedObject(self, &templateBundle, backgroundView, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+		[self addSubview:backgroundView];
+		[backgroundView release];
+	}
+	return self;
+}
+
+- (void)_updateAdaptiveColors
+{
+	%orig();
+	CGPoint *_wallpaperRelativeImageCenter = CHIvarRef(self, _wallpaperRelativeImageCenter, CGPoint);
+	if (_wallpaperRelativeImageCenter) {
+		SBFolderIconBackgroundView *backgroundView = objc_getAssociatedObject(self, &templateBundle);
+		[backgroundView setWallpaperRelativeCenter:*_wallpaperRelativeImageCenter];
+	}
+}
+
+- (void)_updateIconImageViewAnimated:(BOOL)animated
+{
+	%orig();
+}
+
+%end
+
+%subclass SBSwitchIconImageView : SBIconImageView
+
+- (void)updateImageAnimated:(BOOL)animated
+{
+	%orig();
+	[[FSSwitchPanel sharedPanel] applyEffectsToLayer:self.layer forSwitchState:[[FSSwitchPanel sharedPanel] stateForSwitchIdentifier:[(SBSwitchIcon *)self.icon switchIdentifier]] controlState:UIControlStateNormal usingTemplate:templateBundle];
+}
+
 %end
 
 %hook SBIconController
@@ -227,7 +287,14 @@ static NSArray *loadedSwitchIdentifiers;
 {
 	%orig();
 	BOOL isPad = [UIDevice currentDevice].userInterfaceIdiom == UIUserInterfaceIdiomPad;
-	templateBundle = [[NSBundle alloc] initWithPath:isPad ? @"/Library/Application Support/SwitchIcons/IconTemplate~ipad.bundle" : @"/Library/Application Support/SwitchIcons/IconTemplate.bundle"];
+	NSString *path;
+	if (kCFCoreFoundationVersionNumber >= 800.0) {
+		path = isPad ? @"/Library/Application Support/SwitchIcons/IconTemplate-ios7~ipad.bundle" : @"/Library/Application Support/SwitchIcons/IconTemplate-ios7.bundle";
+	} else {
+		path = isPad ? @"/Library/Application Support/SwitchIcons/IconTemplate~ipad.bundle" : @"/Library/Application Support/SwitchIcons/IconTemplate.bundle";
+	}
+	templateBundle = [[NSBundle alloc] initWithPath:path];
+	[FSSwitchPanel sharedPanel];
 	NSArray *newSwitchIdentifiers = [[FSSwitchPanel sharedPanel].switchIdentifiers copy];
 	[loadedSwitchIdentifiers release];
 	loadedSwitchIdentifiers = newSwitchIdentifiers;
